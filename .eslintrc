@@ -1,14 +1,12 @@
 {
   "env": {
     "es6": true,
-    "node": true
+    "node": true,
+    "mocha": true
   },
   "parserOptions": {
     "sourceType": "module",
     "ecmaVersion": 7
-  },
-  "globals": {
-    "$": true
   },
   "extends": ["eslint:recommended"],
   "parser": "babel-eslint",

@@ -6,7 +6,7 @@ const get = require('./asyncGet');
 
 const host = 'skiplagged.com';
 
-module.exports = async function(flightInfo) {
+module.exports = async function(flightInfo = {}) {
   flightInfo.resultsCount = flightInfo.resultsCount > -1 ? flightInfo.resultsCount || Infinity : 1; //Number of results to display, Skiplagged has their own limit
   flightInfo.partialTrips = flightInfo.partialTrips || false; //Example: Orlando -> San Fran -> Tokyo (Actual Stop) -> Hong Kong
 
@@ -23,6 +23,7 @@ module.exports = async function(flightInfo) {
   }
 
   const flightUrl = `/api/search.php?from=${from}&to=${to}&depart=${departureDate}&sort=${sort}`;
+  const { attributes: { city: toCityName } } = airports.findWhere({ iata: to });
 
   const { resultsCount, partialTrips } = flightInfo;
 
@@ -53,7 +54,9 @@ module.exports = async function(flightInfo) {
       const [flightCode, departAirport, departeDatetime, arriveAirport, arriveDatetime] = legs[i];
       const departureZone = airports.findWhere({ iata: departAirport }).get('tz');
 
-      if(arriveAirport === to && partialTrips !== true && i < legs.length) {
+      //console.log({ arriveAirport, to, partialTrips, 'legs.length': legs.length, i });
+      const { attributes: { city: arriveCityName } } = airports.findWhere({ iata: arriveAirport });
+      if(arriveCityName !== toCityName && partialTrips === true && i === legs.length - 1) {
         return;
       }
 
