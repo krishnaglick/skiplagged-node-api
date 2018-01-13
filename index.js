@@ -54,7 +54,6 @@ module.exports = async function(flightInfo = {}) {
       const [flightCode, departAirport, departeDatetime, arriveAirport, arriveDatetime] = legs[i];
       const departureZone = airports.findWhere({ iata: departAirport }).get('tz');
 
-      //console.log({ arriveAirport, to, partialTrips, 'legs.length': legs.length, i });
       const { attributes: { city: arriveCityName } } = airports.findWhere({ iata: arriveAirport });
       if(arriveCityName !== toCityName && partialTrips === true && i === legs.length - 1) {
         return;
