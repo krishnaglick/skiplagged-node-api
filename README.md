@@ -1,5 +1,7 @@
 [![Build Status][travis-image]][travis-url] [![Dependency Status][daviddm-url]][daviddm-image]
 
+TODO: Rewrite this
+
 Node_Skiplagged_API
 ===================
 A node.js wrapper for the [Skiplagged](http://skiplagged.com) API

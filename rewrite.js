@@ -7,10 +7,12 @@ const get = require('./asyncGet');
 const host = 'skiplagged.com';
 
 module.exports = async function(flightInfo) {
-  flightInfo.resultsCount = flightInfo.resultsCount > -1 ? flightInfo.resultsCount : 1;
-  flightInfo.partialTrips = flightInfo.partialTrips || false;
-  flightInfo.flightTime = flightInfo.flightTime || 0;
+  flightInfo.resultsCount = flightInfo.resultsCount > -1 ? flightInfo.resultsCount || Infinity : 1; //Number of results to display, Skiplagged has their own limit
+  flightInfo.partialTrips = flightInfo.partialTrips || false; //Example: Orlando -> San Fran -> Tokyo (Actual Stop) -> Hong Kong
+  flightInfo.flightTime = flightInfo.flightTime || 0; //Hours
   flightInfo.beforeOrAfter = flightInfo.beforeOrAfter || null; //BEFORE || AFTER
+
+  flightInfo.sort = flightInfo.sort || 'cost'; //cost || duration || path
   const { from, to, departureDate, sort = 'cost' } = flightInfo;
 
   const flightUrl = `/api/search.php?from=${from}&to=${to}&depart=${departureDate}&sort=${sort}`;
@@ -24,35 +26,40 @@ module.exports = async function(flightInfo) {
   }
 
   const flightData = JSON.parse(await get({ host, path: flightUrl }));
-  let counter = 0;
-  const flights = flightData.depart.map((flight) => {
-    if(++counter > resultsCount)
+  const flights = [];
+  flightData.depart.forEach((flight, count) => {
+    if(count >= resultsCount && flights.length >= resultsCount)
       return;
-
     const [priceHolder,,flight_key_long,key] = flight;
-    const [price] = priceHolder;
+    const [pricePennies] = priceHolder;
+
+    const flightKey = flightData.flights[key];
+    const [legs,flightDurationSeconds] = flightKey;
 
     const currentFlight = {
-      price: '$' + (price / 100).toFixed(2),
-      price_pennies: flight[0][0],
-      duration: parseDurationInt(flightData.flights[key][1]),
-      duration_seconds: flightData.flights[key][1],
-      departure_time: '',
-      arrival_time: '',
+      price: '$' + (pricePennies / 100).toFixed(2),
+      price_pennies: pricePennies,
+      duration: parseDurationInt(flightDurationSeconds),
+      durationSeconds: flightDurationSeconds,
+      departureTime: '',
+      arrivalTime: '',
       legs: [],
       flight_key: key,
       flight_key_long
     };
 
-    for(let i = 0; i < flightData.flights[key][0].length; i++) {
-      const departure_zone = airports.findWhere({ iata: flightData.flights[key][0][i][1] }).get('tz');
-      if(i === (flightData.flights[key][0].length - 1) && partialTrips !== true) {
+    for(let i = 0; i < legs.length; i++) {
+      const [flightCode, departAirport, departeDatetime, arriveAirport, arriveDatetime] = legs[i];
+      const departureZone = airports.findWhere({ iata: departAirport }).get('tz');
+
+      if(arriveAirport === to && partialTrips !== true && i < legs.length) {
         return;
       }
+
       if(timeCheck !== false && i === 0) {
-        const departure_moment = moment.tz(flightData.flights[key][0][i][2], departure_zone);
-        const flight_time_moment = moment.tz(flightInfo.departure_date+'T'+flightInfo.flight_time, departure_zone);
-        const difference = departure_moment.diff(flight_time_moment, 'minutes');
+        const departureMoment = moment.tz(departeDatetime, departureZone);
+        const flightTimeMoment = moment.tz(flightInfo.departureDate + 'T' + flightInfo.flightTime, departureZone);
+        const difference = departureMoment.diff(flightTimeMoment, 'minutes');
 
         if(timeCheck === 1 && difference > 0) {
           return;
@@ -62,76 +69,82 @@ module.exports = async function(flightInfo) {
         }
       }
 
-      const arrival_zone = airports.findWhere({ iata: flightData.flights[key][0][i][3] }).get('tz');
-      const duration_seconds = findTimestampDifference(flightData.flights[key][0][i][2], flightData.flights[key][0][i][4]);
-      const duration_formatted = parseDurationInt(duration_seconds);
-      const airline = flightData.airlines[flightData.flights[key][0][i][0].substring(0, 2)];
-      const [flight_number] = flightData.flights[key][0][i];
-      const departing_from = airports.findWhere({ iata: flightData.flights[key][0][i][1] }).get('name') + ', ' + flightData.flights[key][0][i][1] + ', ' + airports.findWhere({ iata: flightData.flights[key][0][i][1] }).get('city') + ', ' + airports.findWhere({ iata: flightData.flights[key][0][i][1] }).get('country');
-      const arriving_at = airports.findWhere({ iata: flightData.flights[key][0][i][3] }).get('name') + ', ' + flightData.flights[key][0][i][3] + ', ' + airports.findWhere({ iata: flightData.flights[key][0][i][3] }).get('city') + ', ' + airports.findWhere({ iata: flightData.flights[key][0][i][3] }).get('country');
-      const departure_time = moment.tz(flightData.flights[key][0][i][2], departure_zone).format('dddd, MMMM Do YYYY, hh:mma');
-      const [,,departure_time_formatted] = flightData.flights[key][0][i];
-      const arrival_time = moment.tz(flightData.flights[key][0][i][4], arrival_zone).format('dddd, MMMM Do YYYY, hh:mma');
-      const [,,,,arrival_time_formatted] = flightData.flights[key][0][i];
-      const current_leg = { airline: airline, flight_number: flight_number, duration: duration_formatted, duration_seconds: duration_seconds, departing_from: departing_from, departure_time: departure_time, departure_time_formatted: departure_time_formatted, arriving_at: arriving_at, arrival_time: arrival_time, arrival_time_formatted: arrival_time_formatted };
+      const arrivalZone = airports.findWhere({ iata: arriveAirport }).get('tz');
+      const durationSeconds = findTimestampDifference(departeDatetime, arriveDatetime);
+      const duration = parseDurationInt(durationSeconds);
+      const airline = flightData.airlines[flightCode.substring(0, 2)];
+      const departingFrom = airports.findWhere({ iata: departAirport }).get('name') + ', ' + departAirport + ', ' + airports.findWhere({ iata: departAirport }).get('city') + ', ' + airports.findWhere({ iata: departAirport }).get('country');
+      const arrivingAt = airports.findWhere({ iata: arriveAirport }).get('name') + ', ' + arriveAirport + ', ' + airports.findWhere({ iata: arriveAirport }).get('city') + ', ' + airports.findWhere({ iata: arriveAirport }).get('country');
+      const departureTime = moment.tz(legs[i][2], departureZone).format('dddd, MMMM Do YYYY, hh:mma');
+      const arrivalTime = moment.tz(arriveDatetime, arrivalZone).format('dddd, MMMM Do YYYY, hh:mma');
+      const current_leg = {
+        airline,
+        flightCode,
+        duration,
+        durationSeconds,
+        departingFrom,
+        departureTime,
+        arrivingAt,
+        arrivalTime
+      };
 
       if(i === 0) {
-        currentFlight.departure_time = departure_time;
+        currentFlight.departureTime = departureTime;
       }
-      else if(i === flightData.flights[key][0].length - 1) {
-        currentFlight.arrival_time = arrival_time;
+      else if(i === legs.length - 1) {
+        currentFlight.arrivalTime = arrivalTime;
       }
 
       currentFlight.legs.push(current_leg);
     }
 
-    return currentFlight;
-  }).filter(f => f);
+    flights.push(currentFlight);
+  });
 
   return flights;
 };
 
 function parseDurationInt(duration) {
   const minutes = Math.round(duration / 60);
-  let duration_string = '';
+  let durationString = '';
 
-  let minutes_string = minutes !== 0 ? (minutes + ' Minute' + (minutes > 1 ? 's' : '')) : '';
+  let minutesString = minutes !== 0 ? (minutes + ' Minute' + (minutes > 1 ? 's' : '')) : '';
 
   if(minutes >= 60) {
-    const minutes_r = minutes % 60;
-    const hours = (minutes - minutes_r) / 60;
+    const minutesR = minutes % 60;
+    const hours = (minutes - minutesR) / 60;
 
-    let hours_string = hours !== 0 ? (hours + ' Hour' + (hours > 1 ? 's ' : ' ')) : '';
+    let hoursString = hours !== 0 ? (hours + ' Hour' + (hours > 1 ? 's ' : ' ')) : '';
 
-    minutes_string = (minutes - hours * 60) !== 0 ? ((minutes - hours * 60) + ' Minute' + ((minutes - hours * 60) > 1 ? 's' : '')) : '';
+    minutesString = (minutes - hours * 60) !== 0 ? ((minutes - hours * 60) + ' Minute' + ((minutes - hours * 60) > 1 ? 's' : '')) : '';
 
     if(hours >= 24) {
-      const hours_r = hours % 24;
-      const days = (hours - hours_r) / 24;
+      const hoursR = hours % 24;
+      const days = (hours - hoursR) / 24;
 
-      hours_string = (hours - days * 24) !== 0 ? ((hours - days * 24) + ' Hour' + ((hours - days * 24) > 1 ? 's ' : ' ')) : '';
+      hoursString = (hours - days * 24) !== 0 ? ((hours - days * 24) + ' Hour' + ((hours - days * 24) > 1 ? 's ' : ' ')) : '';
 
-      duration_string = days + ' Day' + (days > 1 ? 's ' : ' ') + hours_string + minutes_string;
+      durationString = days + ' Day' + (days > 1 ? 's ' : ' ') + hoursString + minutesString;
     }
     else {
-      duration_string = hours_string + minutes_string;
+      durationString = hoursString + minutesString;
     }
   }
   else {
-    duration_string = minutes_string;
+    durationString = minutesString;
   }
 
-  return duration_string;
+  return durationString;
 }
 
-function findTimestampDifference(start_timestamp, end_timestamp) {
+function findTimestampDifference(startTimestamp, endTimestamp) {
   const moment = require('moment-timezone');
   const zone = `America/New_York`;
 
-  const start_timestamp_zoned = moment(moment.tz(start_timestamp, zone).format());
-  const end_timestamp_zoned = moment(moment.tz(end_timestamp, zone).format());
+  const startTimestampZoned = moment(moment.tz(startTimestamp, zone).format());
+  const endTimestampZoned = moment(moment.tz(endTimestamp, zone).format());
 
-  const difference = end_timestamp_zoned.diff(start_timestamp_zoned, 'seconds');
+  const difference = endTimestampZoned.diff(startTimestampZoned, 'seconds');
 
   return difference;
 }
