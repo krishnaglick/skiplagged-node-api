@@ -8,11 +8,6 @@ Table of Contents
 =================
  * [Installation](#installation)
  * [Variables](#variables)
- * [Config](#config)
- * [Database Schema](#database-schema)
-   * [Database Name](#database-name)
-   * [Table Names](#table-names)
-   * [Table Schema](#table-schema)
  * [Usage](#usage)
    * [Cheapest Flight](#cheapest-flight)
    * [Shortest Flight](#shortest-flight)
