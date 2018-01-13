@@ -1,7 +1,7 @@
 
 const http = require('http');
 
-module.exports = async function(options) {
+module.exports = function(options) {
   return new Promise((res, rej) => {
     http.get(options, (response) => {
       const { statusCode } = response;
@@ -12,7 +12,8 @@ module.exports = async function(options) {
       }
 
       let body = '';
-      response.on('data', (data) => body += data)
+      response
+        .on('data', (data) => body += data)
         .on('error', rej)
         .on('end', () => {
           res(body);

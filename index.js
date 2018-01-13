@@ -9,29 +9,30 @@ const host = 'skiplagged.com';
 module.exports = async function(flightInfo) {
   flightInfo.resultsCount = flightInfo.resultsCount > -1 ? flightInfo.resultsCount || Infinity : 1; //Number of results to display, Skiplagged has their own limit
   flightInfo.partialTrips = flightInfo.partialTrips || false; //Example: Orlando -> San Fran -> Tokyo (Actual Stop) -> Hong Kong
-  flightInfo.flightTime = flightInfo.flightTime || 0; //Hours
-  flightInfo.beforeOrAfter = flightInfo.beforeOrAfter || null; //BEFORE || AFTER
 
   flightInfo.sort = flightInfo.sort || 'cost'; //cost || duration || path
   const { from, to, departureDate, sort = 'cost' } = flightInfo;
+  if(!from) {
+    throw '"from" is a required field!';
+  }
+  if(!to) {
+    throw '"to" is a required field!';
+  }
+  if(!departureDate) {
+    throw '"departureDate" is a required field!';
+  }
 
   const flightUrl = `/api/search.php?from=${from}&to=${to}&depart=${departureDate}&sort=${sort}`;
 
-  const { resultsCount, partialTrips, flightTime, beforeOrAfter } = flightInfo;
-
-  let timeCheck = false;
-
-  if(flightTime !== 0 && !isNaN(flightTime) && flightTime % 1 === 0 && flightTime <= 24) {
-    timeCheck = beforeOrAfter === 'BEFORE' ? 1 : beforeOrAfter === 'AFTER' ? 2 : timeCheck;
-  }
+  const { resultsCount, partialTrips } = flightInfo;
 
   const flightData = JSON.parse(await get({ host, path: flightUrl }));
   const flights = [];
   flightData.depart.forEach((flight, count) => {
     if(count >= resultsCount && flights.length >= resultsCount)
       return;
-    const [priceHolder,,flight_key_long,key] = flight;
-    const [pricePennies] = priceHolder;
+    const [priceArray, , flight_key_long, key] = flight;
+    const [pricePennies] = priceArray;
 
     const flightKey = flightData.flights[key];
     const [legs,flightDurationSeconds] = flightKey;
@@ -54,19 +55,6 @@ module.exports = async function(flightInfo) {
 
       if(arriveAirport === to && partialTrips !== true && i < legs.length) {
         return;
-      }
-
-      if(timeCheck !== false && i === 0) {
-        const departureMoment = moment.tz(departeDatetime, departureZone);
-        const flightTimeMoment = moment.tz(flightInfo.departureDate + 'T' + flightInfo.flightTime, departureZone);
-        const difference = departureMoment.diff(flightTimeMoment, 'minutes');
-
-        if(timeCheck === 1 && difference > 0) {
-          return;
-        }
-        else if(timeCheck === 2 && difference < 0){
-          return;
-        }
       }
 
       const arrivalZone = airports.findWhere({ iata: arriveAirport }).get('tz');

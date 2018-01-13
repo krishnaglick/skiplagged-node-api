@@ -2,18 +2,14 @@
   "name": "flights",
   "version": "0.1.0",
   "description": "Node.js wrapper for Skiplagged API",
-  "author": "Alex Beebe <iguanahotsauce2009@gmail.com>",
+  "author": "Krishna Glick <krishnaglick@gmail.com> forked from Alex Beebe <iguanahotsauce2009@gmail.com>",
   "repository": {
     "type": "git",
-    "url": "git://github.com/iguanahotsauce/Node_Skiplagged_API.git"
+    "url": "git://github.com/krishnaglick/flight-scanner.git"
   },
   "dependencies": {
     "airport-codes": "1.0.2",
-    "async-waterfall": "0.1.5",
-    "forever": "0.15.1",
-    "moment-timezone": "0.4.1",
-    "mysql": "2.9.0",
-    "nodemailer": "1.8.0"
+    "moment-timezone": "0.4.1"
   },
   "main": "index.js",
   "license": "MIT"
