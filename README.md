@@ -15,22 +15,9 @@ Table of Contents
    * [Table Schema](#table-schema)
  * [Usage](#usage)
    * [Cheapest Flight](#cheapest-flight)
-     * [Example](#example)
-     * [Response](#response)
    * [Shortest Flight](#shortest-flight)
-     * [Example](#example-1)
-     * [Response](#response-1)
    * [Least Layovers](#least-layovers)
-     * [Example](#example-2)
-     * [Response](#response-2)
-   * [Setting a Specific Departure Time](#setting-a-specific-departure-time)
-     * [Example](#example-3)
-     * [Response](#response-3)
    * [Hidden City Flights](#hidden-city-flights)
-     * [Example](#example-4)
-     * [Response](#response-4)
-   * [Database Tracking of Flights](#database-tracking-of-flights)
-     * [Example](#example-5)
  * [License](#license)
 
 Installation
@@ -59,7 +46,6 @@ const flights = flightScanner(searchOptions);
 
 Cheapest Flight
 ---------------
-### Example
 ```javascript
 const flightScanner = require('skiplagged-node-api');
 
@@ -74,7 +60,6 @@ flightScanner(searchOptions).then(console.log);
 
 Shortest Flight
 ---------------
-### Example
 ```javascript
 const flightScanner = require('skiplagged-node-api');
 
@@ -90,7 +75,6 @@ flightScanner(searchOptions).then(console.log);
 
 Least Layovers
 --------------
-### Example
 ```javascript
 const flightScanner = require('skiplagged-node-api');
 
@@ -112,7 +96,6 @@ Using the hidden city tactic is usually practical only for one-way trips, as the
 
 [Wikipedia](https://en.wikipedia.org/wiki/Airline_booking_ploys#Hidden_city_ticketing)
 
-### Example
 ```javascript
 const flightScanner = require('skiplagged-node-api');
 
