@@ -8,8 +8,6 @@ Table of Contents
 =================
  * [Installation](#installation)
  * [Variables](#variables)
-   * [Required](#required)
-   * [Optional](#optional)
  * [Config](#config)
  * [Database Schema](#database-schema)
    * [Database Name](#database-name)
@@ -42,8 +40,6 @@ yarn add skiplagged-node-api
 ```
 Variables
 =========
-Required
---------
 | Variable Name  | Datatype | Description
 |----------------|----------|-----------------------------------------------------------------------------
 | from           | string   | Departure Airport IATA Code [Required]
