@@ -11,7 +11,7 @@ module.exports = async function(flightInfo = {}) {
   flightInfo.partialTrips = flightInfo.partialTrips || false; //Example: Orlando -> San Fran -> Tokyo (Actual Stop) -> Hong Kong
 
   flightInfo.sort = flightInfo.sort || 'cost'; //cost || duration || path
-  const { from, to, departureDate, sort = 'cost' } = flightInfo;
+  const { from, to, departureDate, returnDate, sort = 'cost' } = flightInfo;
   if(!from) {
     throw '"from" is a required field!';
   }
@@ -22,7 +22,7 @@ module.exports = async function(flightInfo = {}) {
     throw '"departureDate" is a required field!';
   }
 
-  const flightUrl = `/api/search.php?from=${from}&to=${to}&depart=${departureDate}&sort=${sort}`;
+  const flightUrl = `/api/search.php?from=${from}&to=${to}&depart=${departureDate}&sort=${sort}${returnDate ? `&return=${returnDate}` : ''}`;
   const { attributes: { city: toCityName } } = airports.findWhere({ iata: to });
 
   const { resultsCount, partialTrips } = flightInfo;

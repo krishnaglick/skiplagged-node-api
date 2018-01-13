@@ -61,5 +61,20 @@ describe('API Tests', () => {
       const flightKeys = flights.map(f => f.flight_key);
       assert.notStrictEqual(flightKeys, partialFlightKeys);
     });
+
+    it('should provide a different price when a return date is specified', async () => {
+      const [oneWayFlight] = await flightScanner({
+        from: 'MCO',
+        to: 'TYO',
+        departureDate: moment().add(7, 'days').format('YYYY-MM-DD')
+      });
+      const [roundTripFlight] = await flightScanner({
+        from: 'MCO',
+        to: 'TYO',
+        departureDate: moment().add(7, 'days').format('YYYY-MM-DD'),
+        returnDate: moment().add(14, 'days').format('YYYY-MM-DD')
+      });
+      assert.notEqual(oneWayFlight.price, roundTripFlight.price);
+    });
   });
 });

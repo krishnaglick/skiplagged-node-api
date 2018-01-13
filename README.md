@@ -13,6 +13,7 @@ Table of Contents
    * [Shortest Flight](#shortest-flight)
    * [Least Layovers](#least-layovers)
    * [Hidden City Flights](#hidden-city-flights)
+ * [FAQ](#FAQ)
  * [License](#license)
 
 Installation
@@ -27,6 +28,7 @@ Variables
 | from           | string   | Departure Airport IATA Code [Required]
 | to             | string   | Arrival Airport IATA Code [Required]
 | departureDate  | string   | Departure Date in YYYY-MM-DD format [Required]
+| returnDate     | string   | Return Date in YYYY-MM-DD format [Optional]
 | sort           | string   | Sort method: `cost` (default), `duration`, or `path`. [Optional]
 | resultsCount   | number   | Number of desired results. `0` (All), `1` (default), `2`, etc. [Optional]
 | partialTrips   | boolean  | `true` or `false` (Default). Toggles Skiplagged's "Get off the flight and leave the airport before the final destination". [Optional]
@@ -103,6 +105,16 @@ const searchOptions = {
 
 flightScanner(searchOptions).then(console.log);
 
+```
+
+FAQ
+===
+```
+  Q) I'm passing a return date but all that's changing is the price.
+  A) The data returned by the api is not easy to interpret. The library I built this from did the parsing legwork, I've just done a refactor and maintenance pass. If you wish to try, feel free to open up a Pull Request.
+
+  Q) Why was X feature removed?
+  A) My design philosophy is one of data. A library should provide a number of pure functions and let me leverage them as I wish. Writing a small app to email the data, save it in a database, or text it is fairly easy in node-land.
 ```
 
 License
